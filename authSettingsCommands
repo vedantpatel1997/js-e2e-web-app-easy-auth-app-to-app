@@ -1,0 +1,17 @@
+backend: 44696949-f73d-40f8-8107-0c313148c5e4 
+frontend: ba540007-14e8-43eb-b975-25308744d37d
+
+az extension add --name authV2
+authSettings=$(az webapp auth show -g myAuthResourceGroup -n frontend-auth)
+authSettings=$(echo "$authSettings" | jq '.properties' | jq '.identityProviders.azureActiveDirectory.login += {"loginParameters":["scope=openid offline_access api://44696949-f73d-40f8-8107-0c313148c5e4/user_impersonation"]}')
+az webapp auth set --resource-group myAuthResourceGroup --name frontend-auth --body "$authSettings"
+
+
+
+authSettings=$(az webapp auth show -g myAuthResourceGroup -n backend-auth)
+authSettings=$(echo "$authSettings" | jq '.properties' | jq '.identityProviders.azureActiveDirectory.validation.defaultAuthorizationPolicy.allowedApplications += ["ba540007-14e8-43eb-b975-25308744d37d"]')
+az webapp auth set --resource-group myAuthResourceGroup --name backend-auth --body "$authSettings"
+
+authSettings=$(az webapp auth show -g myAuthResourceGroup  -n backend-auth)
+authSettings=$(echo "$authSettings" | jq '.properties' | jq '.identityProviders.azureActiveDirectory.validation.jwtClaimChecks += { "allowedClientApplications": ["ba540007-14e8-43eb-b975-25308744d37d"]}')
+az webapp auth set --resource-group myAuthResourceGroup --name backend-auth --body "$authSettings"
